@@ -38,8 +38,8 @@ This project is built for use cases in fintech analytics, banking risk teams, ha
 ## Installation
 ------------------------------------
 
-1. Clone repository:
-   git clone https://github.com/JigyasPritam/Jilingoni-Capstone-Project-1.git
+1. Clone repository:  
+   git clone https://github.com/JigyasPritam/Jilingoni-Capstone-Project-1.git  
    cd Jilingoni-Capstone-Project-1
 
 2. Install dependencies:
