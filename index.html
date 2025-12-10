@@ -1,0 +1,327 @@
+<!doctype html>
+<html>
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Early Risk Dashboard</title>
+  <style>
+    * { box-sizing: border-box; }
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+      margin: 0;
+      padding: 0;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      min-height: 100vh;
+    }
+    .container {
+      max-width: 1400px;
+      margin: 0 auto;
+      padding: 40px 24px;
+    }
+    .header {
+      background: white;
+      border-radius: 12px;
+      padding: 32px;
+      box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+      margin-bottom: 32px;
+    }
+    h1 { 
+      margin: 0 0 24px 0;
+      color: #2d3748;
+      font-size: 32px;
+    }
+    .upload-section {
+      display: flex;
+      gap: 12px;
+      align-items: center;
+      flex-wrap: wrap;
+    }
+    input[type="file"] {
+      padding: 10px;
+      border: 2px solid #e2e8f0;
+      border-radius: 6px;
+      background: white;
+      flex: 1;
+      min-width: 200px;
+    }
+    button {
+      padding: 12px 32px;
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      color: white;
+      border: none;
+      border-radius: 6px;
+      font-weight: 600;
+      cursor: pointer;
+      transition: transform 0.2s, box-shadow 0.2s;
+    }
+    button:hover {
+      transform: translateY(-2px);
+      box-shadow: 0 4px 12px rgba(102, 126, 234, 0.4);
+    }
+    #status { 
+      margin-top: 16px;
+      padding: 12px;
+      border-radius: 6px;
+      font-weight: 500;
+    }
+    #status:not(:empty) {
+      background: #f7fafc;
+      border-left: 4px solid #667eea;
+    }
+    .counts-section {
+      display: flex;
+      gap: 16px;
+      margin-bottom: 32px;
+      flex-wrap: wrap;
+    }
+    .count-card {
+      background: white;
+      padding: 20px 28px;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+      flex: 1;
+      min-width: 150px;
+      border-left: 4px solid;
+    }
+    .count-card.high { border-left-color: #fc8181; }
+    .count-card.medium { border-left-color: #f6ad55; }
+    .count-card.low { border-left-color: #68d391; }
+    .count-card h3 {
+      margin: 0 0 8px 0;
+      font-size: 14px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+      color: #718096;
+    }
+    .count-card .number {
+      font-size: 36px;
+      font-weight: bold;
+      margin: 0;
+    }
+    .count-card.high .number { color: #e53e3e; }
+    .count-card.medium .number { color: #dd6b20; }
+    .count-card.low .number { color: #38a169; }
+    .risk-section {
+      background: white;
+      border-radius: 12px;
+      padding: 24px;
+      margin-bottom: 24px;
+      box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+    }
+    .risk-section h2 {
+      margin: 0 0 20px 0;
+      display: flex;
+      align-items: center;
+      gap: 12px;
+      font-size: 24px;
+    }
+    .risk-badge {
+      display: inline-block;
+      padding: 6px 16px;
+      border-radius: 20px;
+      font-size: 14px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    .risk-badge.high { background: #fed7d7; color: #c53030; }
+    .risk-badge.medium { background: #feebc8; color: #c05621; }
+    .risk-badge.low { background: #c6f6d5; color: #2f855a; }
+    table { 
+      border-collapse: collapse;
+      width: 100%;
+      background: white;
+    }
+    th, td { 
+      padding: 14px 12px;
+      text-align: left;
+      border-bottom: 1px solid #e2e8f0;
+    }
+    th { 
+      background: #f7fafc;
+      color: #2d3748;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      letter-spacing: 0.5px;
+    }
+    tbody tr {
+      transition: background-color 0.2s;
+    }
+    tbody tr:hover {
+      background-color: #f7fafc;
+    }
+    .empty-state {
+      text-align: center;
+      padding: 60px 20px;
+      color: #718096;
+    }
+  </style>
+</head>
+<body>
+  <div class="container">
+    <div class="header">
+      <h1>Early Risk Signals Dashboard</h1>
+      <div class="upload-section">
+        <input type="file" id="fileInput" accept=".csv,.xls,.xlsx" />
+        <button id="uploadBtn">Upload & Analyse</button>
+      </div>
+      <div id="status"></div>
+    </div>
+
+    <div id="counts" class="counts-section"></div>
+
+    <div id="highRiskSection" class="risk-section" style="display:none;">
+      <h2><span class="risk-badge high">High Risk</span></h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Customer ID</th>
+            <th>Risk Score</th>
+            <th>Reasons</th>
+            <th>Utilisation %</th>
+            <th>Avg Payment Ratio</th>
+            <th>Min Due Freq</th>
+            <th>Cash Withdrawal %</th>
+          </tr>
+        </thead>
+        <tbody id="highRiskBody"></tbody>
+      </table>
+    </div>
+
+    <div id="mediumRiskSection" class="risk-section" style="display:none;">
+      <h2><span class="risk-badge medium">Medium Risk</span></h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Customer ID</th>
+            <th>Risk Score</th>
+            <th>Reasons</th>
+            <th>Utilisation %</th>
+            <th>Avg Payment Ratio</th>
+            <th>Min Due Freq</th>
+            <th>Cash Withdrawal %</th>
+          </tr>
+        </thead>
+        <tbody id="mediumRiskBody"></tbody>
+      </table>
+    </div>
+
+    <div id="lowRiskSection" class="risk-section" style="display:none;">
+      <h2><span class="risk-badge low">Low Risk</span></h2>
+      <table>
+        <thead>
+          <tr>
+            <th>Customer ID</th>
+            <th>Risk Score</th>
+            <th>Reasons</th>
+            <th>Utilisation %</th>
+            <th>Avg Payment Ratio</th>
+            <th>Min Due Freq</th>
+            <th>Cash Withdrawal %</th>
+          </tr>
+        </thead>
+        <tbody id="lowRiskBody"></tbody>
+      </table>
+    </div>
+  </div>
+
+  <script>
+    const API_URL = 'http://localhost:5000/upload';
+
+    document.getElementById('uploadBtn').addEventListener('click', async () => {
+      const fileInput = document.getElementById('fileInput');
+      const status = document.getElementById('status');
+      if (fileInput.files.length === 0) {
+        alert('Please select a file first.');
+        return;
+      }
+      const file = fileInput.files[0];
+      const form = new FormData();
+      form.append('file', file);
+
+      status.textContent = 'Uploading and analysing...';
+      try {
+        const res = await fetch(API_URL, { method: 'POST', body: form });
+        const payload = await res.json();
+        if (!res.ok) {
+          status.textContent = 'Error: ' + (payload.error || 'Unknown error');
+          console.error(payload);
+          return;
+        }
+        status.textContent = `Processed ${payload.count} rows`;
+        renderTable(payload.rows);
+      } catch (err) {
+        status.textContent = 'Upload failed: ' + err.toString();
+        console.error(err);
+      }
+    });
+
+    function renderTable(rows) {
+      // Sort rows by risk tier: High -> Medium -> Low
+      const tierOrder = { 'High': 1, 'Medium': 2, 'Low': 3 };
+      const sortedRows = rows.sort((a, b) => {
+        return (tierOrder[a.risk_tier] || 999) - (tierOrder[b.risk_tier] || 999);
+      });
+
+      // Calculate counts by tier
+      const counts = sortedRows.reduce((acc, r) => {
+        acc[r.risk_tier] = (acc[r.risk_tier] || 0) + 1;
+        return acc;
+      }, {});
+
+      // Render count cards
+      const countsDiv = document.getElementById('counts');
+      countsDiv.innerHTML = `
+        <div class="count-card high">
+          <h3>High Risk</h3>
+          <p class="number">${counts['High'] || 0}</p>
+        </div>
+        <div class="count-card medium">
+          <h3>Medium Risk</h3>
+          <p class="number">${counts['Medium'] || 0}</p>
+        </div>
+        <div class="count-card low">
+          <h3>Low Risk</h3>
+          <p class="number">${counts['Low'] || 0}</p>
+        </div>
+      `;
+
+      // Clear all table bodies
+      document.getElementById('highRiskBody').innerHTML = '';
+      document.getElementById('mediumRiskBody').innerHTML = '';
+      document.getElementById('lowRiskBody').innerHTML = '';
+
+      // Hide all sections initially
+      document.getElementById('highRiskSection').style.display = 'none';
+      document.getElementById('mediumRiskSection').style.display = 'none';
+      document.getElementById('lowRiskSection').style.display = 'none';
+
+      // Populate tables by risk tier
+      sortedRows.forEach(r => {
+        const tr = document.createElement('tr');
+        tr.innerHTML = `
+          <td><strong>${r['Customer ID'] || ''}</strong></td>
+          <td>${r.risk_score ?? ''}</td>
+          <td>${r.reasons ?? ''}</td>
+          <td>${r['Utilisation %'] ?? ''}</td>
+          <td>${r['Avg Payment Ratio'] ?? ''}</td>
+          <td>${r['Min Due Paid Frequency'] ?? ''}</td>
+          <td>${r['Cash Withdrawal %'] ?? ''}</td>
+        `;
+
+        if (r.risk_tier === 'High') {
+          document.getElementById('highRiskBody').appendChild(tr);
+          document.getElementById('highRiskSection').style.display = 'block';
+        } else if (r.risk_tier === 'Medium') {
+          document.getElementById('mediumRiskBody').appendChild(tr);
+          document.getElementById('mediumRiskSection').style.display = 'block';
+        } else if (r.risk_tier === 'Low') {
+          document.getElementById('lowRiskBody').appendChild(tr);
+          document.getElementById('lowRiskSection').style.display = 'block';
+        }
+      });
+    }
+  </script>
+</body>
+</html>
